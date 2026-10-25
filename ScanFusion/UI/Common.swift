@@ -23,46 +23,54 @@ struct ModeIntro: View {
             .padding()
 
             ScrollView {
-                VStack(alignment: .leading, spacing: 22) {
-                    Image(systemName: icon)
-                        .font(.system(size: 54, weight: .ultraLight))
-                        .foregroundStyle(Theme.goldGradient)
-                        .frame(maxWidth: .infinity, alignment: .center)
-                        .padding(.top, 8)
+                VStack(alignment: .leading, spacing: 24) {
+                    IconTile(systemName: icon, size: 76)
+                        .shadow(color: Theme.gold.opacity(0.25), radius: 24)
+                        .padding(.top, 4)
 
                     VStack(alignment: .leading, spacing: 8) {
                         Eyebrow(text: eyebrow)
                         Text(title)
-                            .font(Theme.display(32))
+                            .font(.system(size: 34, weight: .bold))
+                            .tracking(-0.5)
                             .foregroundStyle(Theme.ivory)
                     }
 
-                    OrnamentDivider()
-
-                    VStack(alignment: .leading, spacing: 14) {
+                    VStack(alignment: .leading, spacing: 0) {
                         ForEach(Array(tips.enumerated()), id: \.offset) { index, tip in
-                            HStack(alignment: .firstTextBaseline, spacing: 12) {
+                            HStack(alignment: .firstTextBaseline, spacing: 14) {
                                 Text(String(format: "%02d", index + 1))
-                                    .font(.system(size: 12, weight: .semibold, design: .monospaced))
+                                    .font(Theme.mono(12, weight: .semibold))
                                     .foregroundStyle(Theme.gold)
                                 Text(tip)
                                     .font(.system(size: 15))
                                     .foregroundStyle(Theme.ivory.opacity(0.88))
                                     .fixedSize(horizontal: false, vertical: true)
                             }
+                            .padding(.vertical, 12)
+                            if index < tips.count - 1 {
+                                Rectangle().fill(Theme.hairline).frame(height: 0.5)
+                            }
                         }
                     }
+                    .card()
 
-                    TextField("", text: $name, prompt: Text(namePlaceholder).foregroundColor(Theme.muted))
-                        .font(.system(size: 16))
-                        .foregroundStyle(Theme.ivory)
-                        .autocorrectionDisabled()
-                        .padding(14)
-                        .background(RoundedRectangle(cornerRadius: 12, style: .continuous).fill(Theme.surface))
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 12, style: .continuous)
-                                .strokeBorder(Theme.gold.opacity(0.25), lineWidth: 1)
-                        )
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("NOME")
+                            .font(Theme.eyebrow(10))
+                            .tracking(1.6)
+                            .foregroundStyle(Theme.muted)
+                        TextField("", text: $name, prompt: Text(namePlaceholder).foregroundColor(Theme.muted))
+                            .font(.system(size: 17))
+                            .foregroundStyle(Theme.ivory)
+                            .autocorrectionDisabled()
+                            .padding(16)
+                            .background(RoundedRectangle(cornerRadius: 16, style: .continuous).fill(Theme.surface))
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                                    .strokeBorder(Theme.rimGradient, lineWidth: 1)
+                            )
+                    }
 
                     if !supported {
                         Label(unsupportedText, systemImage: "exclamationmark.triangle")
@@ -97,18 +105,18 @@ struct WorkingView: View {
             if let progress {
                 ZStack {
                     Circle()
-                        .stroke(Theme.surfaceHigh, lineWidth: 4)
+                        .stroke(Theme.surfaceHigh, lineWidth: 6)
                     Circle()
                         .trim(from: 0, to: max(0.02, progress))
-                        .stroke(Theme.goldGradient, style: StrokeStyle(lineWidth: 4, lineCap: .round))
+                        .stroke(Theme.goldGradient, style: StrokeStyle(lineWidth: 6, lineCap: .round))
                         .rotationEffect(.degrees(-90))
+                        .shadow(color: Theme.gold.opacity(0.5), radius: 10)
                         .animation(.easeOut(duration: 0.4), value: progress)
                     Text("\(Int(progress * 100))%")
-                        .font(Theme.display(28))
-                        .foregroundStyle(Theme.goldLight)
-                        .monospacedDigit()
+                        .font(Theme.mono(30, weight: .semibold))
+                        .foregroundStyle(Theme.ivory)
                 }
-                .frame(width: 140, height: 140)
+                .frame(width: 160, height: 160)
             } else {
                 ProgressView()
                     .controlSize(.large)
@@ -278,7 +286,7 @@ struct ScanDetailContent: View {
             }
         }
         .scrollContentBackground(.hidden)
-        .background(Theme.ink)
+        .studioBackground()
         .tint(Theme.gold)
     }
 

@@ -16,29 +16,41 @@ struct HomeView: View {
     @State private var active: CaptureMode?
     @State private var recent: [ScanRecord] = []
 
+    private let columns = [GridItem(.flexible(), spacing: 12), GridItem(.flexible(), spacing: 12)]
+
     var body: some View {
         NavigationStack {
             ScrollView {
-                VStack(alignment: .leading, spacing: 26) {
+                VStack(alignment: .leading, spacing: 28) {
                     header
 
-                    VStack(spacing: 14) {
-                        ModeCard(
-                            number: "I", title: "Objeto", subtitle: "Peças e itens com detalhe fino. Fotogrametria + LiDAR.",
+                    VStack(alignment: .leading, spacing: 12) {
+                        Eyebrow(text: "Capturar")
+                        ModeHero(
+                            title: "Objeto", tag: "Fotogrametria + LiDAR",
+                            subtitle: "Peças e itens com detalhe fino, prontos para o Fusion.",
                             icon: "cube.transparent", supported: ObjectCaptureModel.isSupported
                         ) { active = .object }
-                        ModeCard(
-                            number: "II", title: "Ambiente", subtitle: "Cômodos com paredes, portas e janelas. Gera planta DXF.",
-                            icon: "square.split.bottomrightquarter", supported: RoomModel.isSupported
-                        ) { active = .room }
-                        ModeCard(
-                            number: "III", title: "Malha e nuvem", subtitle: "Escaneamento livre de coisas grandes, com nuvem de pontos colorida.",
-                            icon: "circle.grid.cross", supported: LidarController.isSupported
-                        ) { active = .lidar }
-                        ModeCard(
-                            number: "IV", title: "Trena", subtitle: "Distâncias, desnível, perímetro e área com o LiDAR.",
-                            icon: "ruler", supported: LidarController.isSupported
-                        ) { active = .measure }
+                        LazyVGrid(columns: columns, spacing: 12) {
+                            ModeTile(
+                                title: "Ambiente", tag: "Planta DXF",
+                                icon: "square.split.bottomrightquarter", supported: RoomModel.isSupported
+                            ) { active = .room }
+                            ModeTile(
+                                title: "LiDAR", tag: "Malha e nuvem",
+                                icon: "circle.grid.cross", supported: LidarController.isSupported
+                            ) { active = .lidar }
+                            ModeTile(
+                                title: "Trena", tag: "Medidas e área",
+                                icon: "ruler", supported: LidarController.isSupported
+                            ) { active = .measure }
+                            NavigationLink {
+                                LibraryView()
+                            } label: {
+                                TileBody(title: "Biblioteca", tag: "Todos os scans", icon: "books.vertical")
+                            }
+                            .buttonStyle(PressableStyle())
+                        }
                     }
 
                     if !recent.isEmpty {
@@ -50,38 +62,28 @@ struct HomeView: View {
                                     .font(.footnote.weight(.semibold))
                                     .foregroundStyle(Theme.gold)
                             }
-                            ForEach(recent.prefix(3)) { record in
-                                NavigationLink {
-                                    ScanDetailScreen(record: record)
-                                } label: {
-                                    ScanRow(record: record)
+                            VStack(spacing: 8) {
+                                ForEach(recent.prefix(3)) { record in
+                                    NavigationLink {
+                                        ScanDetailScreen(record: record)
+                                    } label: {
+                                        ScanRow(record: record)
+                                    }
+                                    .buttonStyle(PressableStyle())
                                 }
                             }
                         }
-                    }
-
-                    HStack(spacing: 12) {
-                        NavigationLink {
-                            LibraryView()
-                        } label: {
-                            Label("Biblioteca", systemImage: "books.vertical")
-                        }
-                        .buttonStyle(GoldButtonStyle(filled: false))
-                        NavigationLink {
-                            SettingsView()
-                        } label: {
-                            Label("Ajustes", systemImage: "slider.horizontal.3")
-                        }
-                        .buttonStyle(GoldButtonStyle(filled: false))
                     }
                 }
                 .padding(.horizontal, 20)
                 .padding(.bottom, 32)
             }
+            .scrollIndicators(.hidden)
             .studioBackground()
             .toolbar(.hidden, for: .navigationBar)
             .onAppear { recent = ScanStore.all() }
         }
+        .tint(Theme.gold)
         .fullScreenCover(item: $active, onDismiss: { recent = ScanStore.all() }) { mode in
             switch mode {
             case .object: ObjectCaptureFlow()
@@ -98,23 +100,43 @@ struct HomeView: View {
     }
 
     private var header: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            Eyebrow(text: "Estúdio de captura 3D")
-                .padding(.top, 18)
-            Text("ScanFusion")
-                .font(Theme.display(44))
-                .foregroundStyle(Theme.goldGradient)
-            Text("Escaneie com o LiDAR e leve direto para o Fusion, Revit e AutoCAD.")
-                .font(.system(size: 15))
-                .foregroundStyle(Theme.ivory.opacity(0.75))
-            OrnamentDivider().padding(.top, 6)
+        VStack(alignment: .leading, spacing: 14) {
+            HStack(alignment: .center) {
+                BrandMark(size: 40)
+                Spacer()
+                NavigationLink {
+                    SettingsView()
+                } label: {
+                    Image(systemName: "gearshape")
+                        .font(.system(size: 17, weight: .semibold))
+                        .foregroundStyle(Theme.ivory)
+                        .frame(width: 40, height: 40)
+                        .background(.ultraThinMaterial, in: Circle())
+                        .overlay(Circle().strokeBorder(Theme.rimGradient, lineWidth: 0.75))
+                        .environment(\.colorScheme, .dark)
+                }
+                .accessibilityLabel("Ajustes")
+            }
+            .padding(.top, 12)
+
+            VStack(alignment: .leading, spacing: 6) {
+                Text("ScanFusion")
+                    .font(.system(size: 40, weight: .bold))
+                    .tracking(-0.8)
+                    .foregroundStyle(Theme.ivory)
+                Text("Escaneie com o LiDAR e leve direto para o Fusion, Revit e AutoCAD.")
+                    .font(.system(size: 15))
+                    .foregroundStyle(Theme.muted)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
         }
     }
 }
 
-private struct ModeCard: View {
-    let number: String
+/// Cartão grande do modo principal.
+private struct ModeHero: View {
     let title: String
+    let tag: String
     let subtitle: String
     let icon: String
     let supported: Bool
@@ -122,45 +144,87 @@ private struct ModeCard: View {
 
     var body: some View {
         Button(action: action) {
-            HStack(spacing: 16) {
-                ZStack {
-                    RoundedRectangle(cornerRadius: 14, style: .continuous)
-                        .fill(Theme.ink)
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 14, style: .continuous)
-                                .strokeBorder(Theme.gold.opacity(0.35), lineWidth: 1)
-                        )
-                    Image(systemName: icon)
-                        .font(.system(size: 24, weight: .light))
-                        .foregroundStyle(Theme.goldGradient)
+            VStack(alignment: .leading, spacing: 18) {
+                HStack(alignment: .top) {
+                    IconTile(systemName: icon, size: 58)
+                    Spacer()
+                    Image(systemName: "arrow.up.right")
+                        .font(.system(size: 15, weight: .semibold))
+                        .foregroundStyle(Theme.ink)
+                        .frame(width: 34, height: 34)
+                        .background(Circle().fill(Theme.goldGradient))
                 }
-                .frame(width: 58, height: 58)
-
-                VStack(alignment: .leading, spacing: 4) {
-                    HStack(spacing: 8) {
-                        Text(number)
-                            .font(.system(size: 11, weight: .semibold, design: .serif))
-                            .foregroundStyle(Theme.gold)
-                        Text(title)
-                            .font(Theme.display(20))
-                            .foregroundStyle(Theme.ivory)
-                    }
+                VStack(alignment: .leading, spacing: 6) {
+                    Text(tag.uppercased())
+                        .font(Theme.eyebrow(10))
+                        .tracking(1.6)
+                        .foregroundStyle(Theme.gold)
+                    Text(title)
+                        .font(.system(size: 28, weight: .bold))
+                        .foregroundStyle(Theme.ivory)
                     Text(supported ? subtitle : "Indisponível neste aparelho")
-                        .font(.system(size: 13))
+                        .font(.system(size: 14))
                         .foregroundStyle(Theme.muted)
                         .multilineTextAlignment(.leading)
                         .fixedSize(horizontal: false, vertical: true)
                 }
-                Spacer(minLength: 0)
-                Image(systemName: "chevron.right")
-                    .font(.footnote.weight(.semibold))
-                    .foregroundStyle(Theme.gold.opacity(0.7))
             }
+            .padding(4)
+            .frame(maxWidth: .infinity, alignment: .leading)
             .card()
         }
-        .buttonStyle(.plain)
-        .opacity(supported ? 1 : 0.5)
+        .buttonStyle(PressableStyle())
+        .opacity(supported ? 1 : 0.45)
         .disabled(!supported)
+    }
+}
+
+private struct ModeTile: View {
+    let title: String
+    let tag: String
+    let icon: String
+    let supported: Bool
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            TileBody(title: title, tag: supported ? tag : "Indisponível", icon: icon)
+        }
+        .buttonStyle(PressableStyle())
+        .opacity(supported ? 1 : 0.45)
+        .disabled(!supported)
+    }
+}
+
+private struct TileBody: View {
+    let title: String
+    let tag: String
+    let icon: String
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            IconTile(systemName: icon, size: 44)
+            VStack(alignment: .leading, spacing: 3) {
+                Text(title)
+                    .font(.system(size: 17, weight: .semibold))
+                    .foregroundStyle(Theme.ivory)
+                Text(tag)
+                    .font(.system(size: 12))
+                    .foregroundStyle(Theme.muted)
+                    .lineLimit(1)
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .card()
+    }
+}
+
+/// Afunda levemente ao tocar, sem apagar o conteúdo.
+private struct PressableStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .scaleEffect(configuration.isPressed ? 0.97 : 1)
+            .animation(.spring(response: 0.25, dampingFraction: 0.7), value: configuration.isPressed)
     }
 }
 
@@ -169,15 +233,10 @@ struct ScanRow: View {
 
     var body: some View {
         HStack(spacing: 14) {
-            Image(systemName: record.kind.icon)
-                .font(.system(size: 18, weight: .light))
-                .foregroundStyle(Theme.gold)
-                .frame(width: 36, height: 36)
-                .background(Circle().fill(Theme.ink))
-                .overlay(Circle().strokeBorder(Theme.gold.opacity(0.3), lineWidth: 0.5))
+            IconTile(systemName: record.kind.icon, size: 40)
             VStack(alignment: .leading, spacing: 3) {
                 Text(record.name)
-                    .font(.system(size: 15, weight: .medium))
+                    .font(.system(size: 15, weight: .semibold))
                     .foregroundStyle(Theme.ivory)
                     .lineLimit(1)
                 Text(record.date.formatted(date: .abbreviated, time: .shortened) + " · " + record.kind.title)
@@ -190,8 +249,12 @@ struct ScanRow: View {
                     .font(.caption)
                     .foregroundStyle(Theme.gold.opacity(0.8))
             }
+            Image(systemName: "chevron.right")
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(Theme.muted)
         }
         .padding(12)
-        .background(RoundedRectangle(cornerRadius: 14, style: .continuous).fill(Theme.surface))
+        .background(RoundedRectangle(cornerRadius: 18, style: .continuous).fill(Theme.surface))
+        .overlay(RoundedRectangle(cornerRadius: 18, style: .continuous).strokeBorder(Theme.hairline, lineWidth: 1))
     }
 }

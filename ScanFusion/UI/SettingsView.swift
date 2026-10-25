@@ -103,7 +103,7 @@ struct SettingsView: View {
             .listRowBackground(Theme.surface)
         }
         .scrollContentBackground(.hidden)
-        .background(Theme.ink)
+        .studioBackground()
         .tint(Theme.gold)
         .navigationTitle("Ajustes")
         .fileImporter(isPresented: $pickingFolder, allowedContentTypes: [.folder]) { result in

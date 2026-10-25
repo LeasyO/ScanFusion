@@ -1,18 +1,19 @@
 import SwiftUI
 import UIKit
 
-/// Identidade visual: preto profundo + dourado, tipografia serifada no estilo estúdio.
+/// Identidade visual: grafite profundo + champanhe, no estilo de instrumento de precisão.
 /// Para trocar a paleta, edite só as cores abaixo.
 enum Theme {
-    static let ink = Color(red: 0.043, green: 0.043, blue: 0.047)          // #0B0B0C
-    static let surface = Color(red: 0.086, green: 0.082, blue: 0.090)      // #161517
-    static let surfaceHigh = Color(red: 0.133, green: 0.125, blue: 0.133)  // #222022
-    static let gold = Color(red: 0.788, green: 0.635, blue: 0.290)         // #C9A24A
-    static let goldLight = Color(red: 0.902, green: 0.780, blue: 0.478)    // #E6C77A
-    static let goldDeep = Color(red: 0.545, green: 0.420, blue: 0.157)     // #8B6B28
-    static let ivory = Color(red: 0.949, green: 0.929, blue: 0.894)        // #F2EDE4
-    static let muted = Color(red: 0.620, green: 0.600, blue: 0.570)        // #9E9991
-    static let danger = Color(red: 0.850, green: 0.350, blue: 0.300)
+    static let ink = Color(red: 0.027, green: 0.031, blue: 0.039)          // #07080A
+    static let surface = Color(red: 0.075, green: 0.078, blue: 0.090)      // #131417
+    static let surfaceHigh = Color(red: 0.118, green: 0.122, blue: 0.137)  // #1E1F23
+    static let gold = Color(red: 0.831, green: 0.698, blue: 0.416)         // #D4B26A
+    static let goldLight = Color(red: 0.945, green: 0.851, blue: 0.627)    // #F1D9A0
+    static let goldDeep = Color(red: 0.612, green: 0.478, blue: 0.208)     // #9C7A35
+    static let ivory = Color(red: 0.957, green: 0.945, blue: 0.918)        // #F4F1EA
+    static let muted = Color(red: 0.557, green: 0.541, blue: 0.518)        // #8E8A84
+    static let hairline = Color.white.opacity(0.08)
+    static let danger = Color(red: 0.937, green: 0.408, blue: 0.361)
 
     static let goldGradient = LinearGradient(
         colors: [goldLight, gold, goldDeep],
@@ -20,34 +21,48 @@ enum Theme {
         endPoint: .bottomTrailing
     )
 
+    /// Borda fina que acende no canto superior, como luz batendo no vidro.
+    static let rimGradient = LinearGradient(
+        colors: [gold.opacity(0.55), Color.white.opacity(0.06), Color.white.opacity(0.03)],
+        startPoint: .topLeading,
+        endPoint: .bottomTrailing
+    )
+
     static func display(_ size: CGFloat) -> Font {
-        .system(size: size, weight: .semibold, design: .serif)
+        .system(size: size, weight: .semibold)
     }
 
     static func eyebrow(_ size: CGFloat = 11) -> Font {
         .system(size: size, weight: .semibold).width(.expanded)
     }
 
+    static func mono(_ size: CGFloat, weight: Font.Weight = .medium) -> Font {
+        .system(size: size, weight: weight, design: .monospaced)
+    }
+
     static var uiGold: UIColor { UIColor(gold) }
 
     static func applyUIKitAppearance() {
         let nav = UINavigationBarAppearance()
-        nav.configureWithOpaqueBackground()
-        nav.backgroundColor = UIColor(ink)
-        nav.shadowColor = UIColor(gold.opacity(0.15))
-        let serif = UIFont.systemFont(ofSize: 17, weight: .semibold).fontDescriptor.withDesign(.serif)
-        let serifLarge = UIFont.systemFont(ofSize: 32, weight: .semibold).fontDescriptor.withDesign(.serif)
+        nav.configureWithTransparentBackground()
+        nav.backgroundEffect = UIBlurEffect(style: .systemUltraThinMaterialDark)
+        nav.backgroundColor = UIColor(ink.opacity(0.6))
+        nav.shadowColor = UIColor(white: 1, alpha: 0.06)
         nav.titleTextAttributes = [
             .foregroundColor: UIColor(ivory),
-            .font: serif.map { UIFont(descriptor: $0, size: 17) } ?? UIFont.systemFont(ofSize: 17, weight: .semibold)
+            .font: UIFont.systemFont(ofSize: 17, weight: .semibold)
         ]
         nav.largeTitleTextAttributes = [
-            .foregroundColor: UIColor(goldLight),
-            .font: serifLarge.map { UIFont(descriptor: $0, size: 32) } ?? UIFont.systemFont(ofSize: 32, weight: .semibold)
+            .foregroundColor: UIColor(ivory),
+            .font: UIFont.systemFont(ofSize: 34, weight: .bold)
         ]
         UINavigationBar.appearance().standardAppearance = nav
         UINavigationBar.appearance().scrollEdgeAppearance = nav
         UINavigationBar.appearance().compactAppearance = nav
+        UINavigationBar.appearance().tintColor = UIColor(gold)
+        UISegmentedControl.appearance().selectedSegmentTintColor = UIColor(gold)
+        UISegmentedControl.appearance().setTitleTextAttributes([.foregroundColor: UIColor(ink)], for: .selected)
+        UISegmentedControl.appearance().setTitleTextAttributes([.foregroundColor: UIColor(ivory)], for: .normal)
     }
 }
 
@@ -55,41 +70,42 @@ struct GoldButtonStyle: ButtonStyle {
     var filled = true
 
     func makeBody(configuration: Configuration) -> some View {
-        configuration.label
-            .font(.system(size: 15, weight: .semibold))
-            .tracking(0.4)
-            .foregroundStyle(filled ? Theme.ink : Theme.goldLight)
-            .padding(.vertical, 14)
+        let shape = RoundedRectangle(cornerRadius: 16, style: .continuous)
+        return configuration.label
+            .font(.system(size: 16, weight: .semibold))
+            .foregroundStyle(filled ? Theme.ink : Theme.ivory)
+            .padding(.vertical, 15)
             .padding(.horizontal, 16)
             .frame(maxWidth: .infinity)
             .background {
                 if filled {
-                    RoundedRectangle(cornerRadius: 14, style: .continuous).fill(Theme.goldGradient)
+                    shape.fill(Theme.goldGradient)
+                        .overlay(shape.strokeBorder(Color.white.opacity(0.35), lineWidth: 0.5))
+                        .shadow(color: Theme.gold.opacity(configuration.isPressed ? 0.15 : 0.35), radius: 14, y: 6)
                 } else {
-                    RoundedRectangle(cornerRadius: 14, style: .continuous)
-                        .fill(Theme.ink.opacity(0.55))
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 14, style: .continuous)
-                                .strokeBorder(Theme.gold.opacity(0.55), lineWidth: 1)
-                        )
+                    shape.fill(.ultraThinMaterial)
+                        .overlay(shape.fill(Theme.surface.opacity(0.55)))
+                        .overlay(shape.strokeBorder(Theme.rimGradient, lineWidth: 1))
                 }
             }
-            .opacity(configuration.isPressed ? 0.75 : 1)
-            .scaleEffect(configuration.isPressed ? 0.98 : 1)
+            .scaleEffect(configuration.isPressed ? 0.97 : 1)
+            .animation(.spring(response: 0.25, dampingFraction: 0.7), value: configuration.isPressed)
     }
 }
 
 struct CardStyle: ViewModifier {
     func body(content: Content) -> some View {
-        content
+        let shape = RoundedRectangle(cornerRadius: 22, style: .continuous)
+        return content
             .padding(16)
             .background(
-                RoundedRectangle(cornerRadius: 18, style: .continuous).fill(Theme.surface)
+                shape.fill(
+                    LinearGradient(colors: [Theme.surfaceHigh, Theme.surface],
+                                   startPoint: .top, endPoint: .bottom)
+                )
             )
-            .overlay(
-                RoundedRectangle(cornerRadius: 18, style: .continuous)
-                    .strokeBorder(Theme.gold.opacity(0.18), lineWidth: 1)
-            )
+            .overlay(shape.strokeBorder(Theme.rimGradient, lineWidth: 1))
+            .shadow(color: .black.opacity(0.45), radius: 18, y: 10)
     }
 }
 
@@ -97,20 +113,83 @@ extension View {
     func card() -> some View { modifier(CardStyle()) }
 
     func studioBackground() -> some View {
-        background(Theme.ink.ignoresSafeArea())
+        background(StudioBackdrop().ignoresSafeArea())
+    }
+}
+
+/// Fundo grafite com brilho champanhe no topo e grade de pontos que lembra a nuvem do LiDAR.
+struct StudioBackdrop: View {
+    var body: some View {
+        ZStack {
+            Theme.ink
+            RadialGradient(
+                colors: [Theme.gold.opacity(0.16), .clear],
+                center: .top, startRadius: 0, endRadius: 520
+            )
+            Canvas { context, size in
+                let step: CGFloat = 22
+                let limit = size.height * 0.55
+                var y: CGFloat = step / 2
+                while y < limit {
+                    let fade = 1 - y / limit
+                    var x: CGFloat = step / 2
+                    while x < size.width {
+                        let dot = CGRect(x: x - 0.75, y: y - 0.75, width: 1.5, height: 1.5)
+                        context.fill(Path(ellipseIn: dot), with: .color(.white.opacity(0.07 * fade)))
+                        x += step
+                    }
+                    y += step
+                }
+            }
+        }
+        .accessibilityHidden(true)
+    }
+}
+
+/// Selo do app: mira de scanner dentro de um círculo champanhe.
+struct BrandMark: View {
+    var size: CGFloat = 44
+    var body: some View {
+        ZStack {
+            Circle().fill(Theme.goldGradient)
+            Circle().strokeBorder(Color.white.opacity(0.4), lineWidth: 0.5)
+            Image(systemName: "viewfinder")
+                .font(.system(size: size * 0.46, weight: .semibold))
+                .foregroundStyle(Theme.ink)
+        }
+        .frame(width: size, height: size)
+        .shadow(color: Theme.gold.opacity(0.4), radius: 12, y: 4)
+        .accessibilityHidden(true)
+    }
+}
+
+/// Ícone de modo: quadrado de vidro com brilho dourado.
+struct IconTile: View {
+    let systemName: String
+    var size: CGFloat = 52
+    var body: some View {
+        let shape = RoundedRectangle(cornerRadius: size * 0.3, style: .continuous)
+        return ZStack {
+            shape.fill(Theme.ink.opacity(0.7))
+            shape.fill(RadialGradient(colors: [Theme.gold.opacity(0.28), .clear],
+                                      center: .topLeading, startRadius: 0, endRadius: size))
+            shape.strokeBorder(Theme.rimGradient, lineWidth: 1)
+            Image(systemName: systemName)
+                .font(.system(size: size * 0.42, weight: .regular))
+                .foregroundStyle(Theme.goldGradient)
+        }
+        .frame(width: size, height: size)
+        .accessibilityHidden(true)
     }
 }
 
 struct OrnamentDivider: View {
     var body: some View {
-        HStack(spacing: 8) {
-            Rectangle().fill(Theme.gold.opacity(0.35)).frame(height: 0.5)
-            Image(systemName: "diamond.fill")
-                .font(.system(size: 6))
-                .foregroundStyle(Theme.gold)
-            Rectangle().fill(Theme.gold.opacity(0.35)).frame(height: 0.5)
-        }
-        .accessibilityHidden(true)
+        Rectangle()
+            .fill(LinearGradient(colors: [Theme.gold.opacity(0.5), Theme.hairline, .clear],
+                                 startPoint: .leading, endPoint: .trailing))
+            .frame(height: 0.5)
+            .accessibilityHidden(true)
     }
 }
 
@@ -130,15 +209,18 @@ struct HUDPill: View {
     var icon: String? = nil
     var body: some View {
         HStack(spacing: 6) {
-            if let icon { Image(systemName: icon) }
-            Text(text)
+            if let icon {
+                Image(systemName: icon).foregroundStyle(Theme.gold)
+            }
+            Text(text).monospacedDigit()
         }
-        .font(.system(size: 13, weight: .medium))
+        .font(.system(size: 13, weight: .semibold))
         .foregroundStyle(Theme.ivory)
         .padding(.horizontal, 12)
-        .padding(.vertical, 7)
+        .padding(.vertical, 8)
         .background(.ultraThinMaterial, in: Capsule())
-        .overlay(Capsule().strokeBorder(Theme.gold.opacity(0.35), lineWidth: 0.5))
+        .overlay(Capsule().strokeBorder(Theme.rimGradient, lineWidth: 0.75))
+        .environment(\.colorScheme, .dark)
     }
 }
 
@@ -149,10 +231,11 @@ struct CloseButton: View {
         Button(action: action) {
             Image(systemName: "xmark")
                 .font(.system(size: 14, weight: .bold))
-                .foregroundStyle(Theme.goldLight)
-                .frame(width: 38, height: 38)
+                .foregroundStyle(Theme.ivory)
+                .frame(width: 40, height: 40)
                 .background(.ultraThinMaterial, in: Circle())
-                .overlay(Circle().strokeBorder(Theme.gold.opacity(0.4), lineWidth: 0.5))
+                .overlay(Circle().strokeBorder(Theme.rimGradient, lineWidth: 0.75))
+                .environment(\.colorScheme, .dark)
         }
         .accessibilityLabel("Fechar")
     }

@@ -53,7 +53,7 @@ struct LibraryView: View {
             }
         }
         .scrollContentBackground(.hidden)
-        .background(Theme.ink)
+        .studioBackground()
         .navigationTitle("Biblioteca")
         .onAppear { records = ScanStore.all() }
     }
