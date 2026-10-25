@@ -38,7 +38,8 @@ final class ObjectCaptureModel: ObservableObject {
 
             var config = ObjectCaptureSession.Configuration()
             config.checkpointDirectory = checkpoints
-            config.isOverCaptureEnabled = false
+            // Continua fotografando além do limite do iPhone: as fotos extras vão para o PC.
+            config.isOverCaptureEnabled = true
 
             let s = ObjectCaptureSession()
             session = s
@@ -205,7 +206,8 @@ struct ObjectCaptureFlow: View {
                         "Objeto fosco e com textura, sobre superfície lisa que contraste com ele.",
                         "Luz difusa: sombra ou dia nublado. Evite reflexos fortes.",
                         "Dê uma volta completa, depois outra mais alta e, se der, vire o objeto.",
-                        "Com tripé, escolha Tripé antes de detectar: dá para circular por baixo sem virar a peça."
+                        "Com tripé, escolha Tripé antes de detectar: dá para circular por baixo sem virar a peça.",
+                        "Para encaixe exato, processe no PC (aba Scanner do Estúdio) com a peça sobre a folha de marcadores."
                     ],
                     name: $model.name,
                     namePlaceholder: "Nome da peça",
