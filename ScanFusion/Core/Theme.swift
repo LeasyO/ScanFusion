@@ -224,6 +224,33 @@ struct HUDPill: View {
     }
 }
 
+/// "i" dourado: toque para ver, num balão, como usar a ferramenta ao lado.
+struct InfoButton: View {
+    let text: String
+    @State private var shown = false
+
+    var body: some View {
+        Button { shown = true } label: {
+            Image(systemName: "info.circle")
+                .font(.system(size: 17, weight: .semibold))
+                .foregroundStyle(Theme.gold)
+                .frame(width: 32, height: 32)
+                .contentShape(Rectangle())
+        }
+        .accessibilityLabel("Como usar")
+        .popover(isPresented: $shown) {
+            Text(text)
+                .font(.callout)
+                .foregroundStyle(Theme.ivory)
+                .fixedSize(horizontal: false, vertical: true)
+                .padding(16)
+                .frame(width: 300)
+                .presentationCompactAdaptation(.popover)
+                .presentationBackground(Theme.surfaceHigh)
+        }
+    }
+}
+
 /// Botão redondo de fechar para telas cheias.
 struct CloseButton: View {
     let action: () -> Void

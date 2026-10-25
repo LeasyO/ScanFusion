@@ -86,7 +86,11 @@ struct SettingsView: View {
                     Text(syncError).font(.footnote).foregroundStyle(Theme.danger)
                 }
             } header: {
-                Text("Envio automático para o PC").foregroundStyle(Theme.gold)
+                HStack {
+                    Text("Envio automático para o PC").foregroundStyle(Theme.gold)
+                    Spacer()
+                    InfoButton(text: "Precisa do app Google Drive no iPhone, na mesma conta do PC. Escolha Google Drive › Meu Drive › ScanFusion uma vez só. Cada scan sobe sozinho (no modo Objeto, com as fotos) e aparece no Estúdio 3D › Scanner › Capturas.")
+                }
             } footer: {
                 Text("No Arquivos, escolha Google Drive › Meu Drive › ScanFusion. Cada scan vai para lá sozinho, com as fotos do modo Objeto, e aparece no Estúdio 3D › Scanner, sem cabo.")
             }

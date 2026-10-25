@@ -203,11 +203,11 @@ struct ObjectCaptureFlow: View {
                     title: "Capturar uma peça",
                     icon: "cube.transparent",
                     tips: [
-                        "Objeto fosco e com textura, sobre superfície lisa que contraste com ele.",
-                        "Luz difusa: sombra ou dia nublado. Evite reflexos fortes.",
-                        "Dê uma volta completa, depois outra mais alta e, se der, vire o objeto.",
-                        "Com tripé, escolha Tripé antes de detectar: dá para circular por baixo sem virar a peça.",
-                        "Para encaixe exato, processe no PC (aba Scanner do Estúdio) com a peça sobre a folha de marcadores."
+                        "Peça no meio da folha de marcadores do Estúdio 3D: ela dá a escala exata no PC. Metal brilhante: spray fosco.",
+                        "Luz difusa (sombra ou dia nublado), sem flash. Nada se mexendo na mesa.",
+                        "3 voltas devagar: baixa, média e alta, com a peça e os 4 quadrados no quadro.",
+                        "Face de baixo para o PC: faça outra captura com a peça virada (o Estúdio junta as duas).",
+                        "Com tripé: escolha Tripé antes de detectar e circule por cima, no meio e por baixo."
                     ],
                     name: $model.name,
                     namePlaceholder: "Nome da peça",
@@ -281,11 +281,14 @@ private struct ObjectCaptureScreen: View {
         switch model.captureState {
         case .ready:
             VStack(spacing: 10) {
-                Picker("Apoio", selection: $onTripod) {
-                    Text("Mesa").tag(false)
-                    Text("Tripé").tag(true)
+                HStack(spacing: 6) {
+                    Picker("Apoio", selection: $onTripod) {
+                        Text("Mesa").tag(false)
+                        Text("Tripé").tag(true)
+                    }
+                    .pickerStyle(.segmented)
+                    InfoButton(text: "Mesa: peça apoiada no meio da folha de marcadores (o jeito mais preciso). Tripé: peça presa no alto; dá para fotografar por baixo sem virar. No PC, use Cortar a base para tirar o tripé, com a folha no chão ou o tripé de mesa em pé sobre ela.")
                 }
-                .pickerStyle(.segmented)
                 Button { model.detect() } label: { Label("Detectar objeto", systemImage: "scope") }
                     .buttonStyle(GoldButtonStyle())
             }
@@ -313,6 +316,7 @@ private struct ObjectCaptureScreen: View {
                             Button("Virar o objeto") { model.startFlip() }
                                 .buttonStyle(GoldButtonStyle(filled: false))
                         }
+                        InfoButton(text: "Nova volta: outra altura, sem mexer na peça (faça 3: baixa, média e alta). Virar o objeto: só para o modelo do iPhone. Para o PC, termine aqui e faça outra captura com a peça virada; o Estúdio junta as duas.")
                     }
                     Button { model.finish() } label: { Label("Finalizar e gerar", systemImage: "checkmark") }
                         .buttonStyle(GoldButtonStyle())

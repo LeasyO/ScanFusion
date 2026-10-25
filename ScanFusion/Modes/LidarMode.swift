@@ -380,12 +380,15 @@ private struct LidarScreen: View {
 
                 VStack(spacing: 10) {
                     if !controller.recording && controller.points == 0 {
-                        Picker("Alvo", selection: $piece) {
-                            Text("Ambiente").tag(false)
-                            Text("Peça · alta precisão").tag(true)
+                        HStack(spacing: 6) {
+                            Picker("Alvo", selection: $piece) {
+                                Text("Ambiente").tag(false)
+                                Text("Peça · alta precisão").tag(true)
+                            }
+                            .pickerStyle(.segmented)
+                            .onChange(of: piece) { controller.start() }
+                            InfoButton(text: "Ambiente: cômodos, fachadas, coisas grandes (até 4 m). Peça: pontos a cada 2 mm, até 1 m de distância, com a média de várias leituras por ponto. O LiDAR erra ~1 cm; para peças com encaixe, o modo Objeto + Estúdio no PC é bem mais preciso.")
                         }
-                        .pickerStyle(.segmented)
-                        .onChange(of: piece) { controller.start() }
                         if piece {
                             HUDPill(text: "Fique entre 30 cm e 1 m e passe devagar", icon: "ruler")
                         }

@@ -25,7 +25,10 @@ struct HomeView: View {
                     header
 
                     VStack(alignment: .leading, spacing: 12) {
-                        Eyebrow(text: "Capturar")
+                        HStack(spacing: 2) {
+                            Eyebrow(text: "Capturar")
+                            InfoButton(text: "Objeto: peças com detalhe e medida (fotos + LiDAR; no PC chega a décimos de mm). Ambiente: cômodo inteiro com paredes, portas e janelas, gera planta DXF. LiDAR: malha e nuvem de pontos de coisas grandes. Trena: distâncias, desnível e área na hora.")
+                        }
                         ModeHero(
                             title: "Objeto", tag: "Fotogrametria + LiDAR",
                             subtitle: "Peças e itens com detalhe fino, prontos para o Fusion.",
