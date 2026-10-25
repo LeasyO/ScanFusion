@@ -16,7 +16,9 @@ final class LidarController: NSObject, ObservableObject, ARSessionDelegate {
     private let queue = DispatchQueue(label: "scanfusion.lidar", qos: .userInitiated)
     // Acessados só na fila `queue`:
     private var cloud = PointCloud()
-    private var voxels = Set<SIMD3<Int32>>()
+    // Cubinho -> índice do ponto; cada novo acerto entra na média (reduz o ruído do sensor).
+    private var voxels: [SIMD3<Int32>: Int] = [:]
+    private var hits: [Float] = []
     private var frameCounter = 0
     private var recordingFlag = false
     private var options = LidarOptions.current
@@ -41,6 +43,7 @@ final class LidarController: NSObject, ObservableObject, ARSessionDelegate {
             self.options = opts
             self.cloud = PointCloud()
             self.voxels.removeAll()
+            self.hits.removeAll()
             self.recordingFlag = false
         }
         let config = ARWorldTrackingConfiguration()
@@ -51,6 +54,9 @@ final class LidarController: NSObject, ObservableObject, ARSessionDelegate {
         }
         if ARWorldTrackingConfiguration.supportsFrameSemantics(.sceneDepth) {
             config.frameSemantics.insert(.sceneDepth)
+        }
+        if ARWorldTrackingConfiguration.supportsFrameSemantics(.smoothedSceneDepth) {
+            config.frameSemantics.insert(.smoothedSceneDepth)
         }
         config.environmentTexturing = .none
         arView.session.run(config, options: [.resetTracking, .removeExistingAnchors])
@@ -126,7 +132,8 @@ final class LidarController: NSObject, ObservableObject, ARSessionDelegate {
     }
 
     private func accumulate(_ frame: ARFrame) {
-        guard let depthData = frame.sceneDepth else { return }
+        // A versão suavizada combina vários quadros: menos ruído nas bordas e superfícies.
+        guard let depthData = frame.smoothedSceneDepth ?? frame.sceneDepth else { return }
         let depth = depthData.depthMap
         let confidence = depthData.confidenceMap
         let image = frame.capturedImage
@@ -165,6 +172,7 @@ final class LidarController: NSObject, ObservableObject, ARSessionDelegate {
         let t = frame.camera.transform
         let voxel = options.voxelSize
         let maxDepth = options.maxDepth
+        let step = options.pixelStep
 
         func clamp(_ v: Float) -> UInt8 { UInt8(max(0, min(255, v))) }
 
@@ -172,7 +180,7 @@ final class LidarController: NSObject, ObservableObject, ARSessionDelegate {
         while v < dh {
             var u = 0
             while u < dw {
-                defer { u += 2 }
+                defer { u += step }
                 if let cBase {
                     let c = cBase.load(fromByteOffset: v * cRow + u, as: UInt8.self)
                     if c < 2 { continue }
@@ -189,7 +197,14 @@ final class LidarController: NSObject, ObservableObject, ARSessionDelegate {
                     Int32((p.y / voxel).rounded(.down)),
                     Int32((p.z / voxel).rounded(.down))
                 )
-                if !voxels.insert(key).inserted { continue }
+                if let i = voxels[key] {
+                    let n = min(hits[i] + 1, 64)
+                    hits[i] = n
+                    cloud.points[i] += (p - cloud.points[i]) / n
+                    continue
+                }
+                voxels[key] = cloud.count
+                hits.append(1)
 
                 let iu = min(iw - 1, Int(Float(u) / sx))
                 let iv = min(ih - 1, Int(Float(v) / sy))
@@ -209,7 +224,7 @@ final class LidarController: NSObject, ObservableObject, ARSessionDelegate {
                     return
                 }
             }
-            v += 2
+            v += step
         }
     }
 }
@@ -341,6 +356,7 @@ struct LidarFlow: View {
 private struct LidarScreen: View {
     @ObservedObject var model: LidarModel
     @ObservedObject var controller: LidarController
+    @AppStorage(SettingsKey.lidarPiece) private var piece = false
 
     var body: some View {
         ZStack {
@@ -363,6 +379,17 @@ private struct LidarScreen: View {
                 Spacer()
 
                 VStack(spacing: 10) {
+                    if !controller.recording && controller.points == 0 {
+                        Picker("Alvo", selection: $piece) {
+                            Text("Ambiente").tag(false)
+                            Text("Peça · alta precisão").tag(true)
+                        }
+                        .pickerStyle(.segmented)
+                        .onChange(of: piece) { controller.start() }
+                        if piece {
+                            HUDPill(text: "Fique entre 30 cm e 1 m e passe devagar", icon: "ruler")
+                        }
+                    }
                     HStack(spacing: 10) {
                         Button {
                             controller.setMeshVisible(!controller.meshVisible)
