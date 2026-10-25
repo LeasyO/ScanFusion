@@ -11,6 +11,7 @@ enum SettingsKey {
     static let splitClasses = "lidar.splitClasses"
     static let maxDepth = "lidar.maxDepth"
     static let voxelCM = "lidar.voxelCM"
+    static let objectTripod = "object.tripod"
 }
 
 enum ExportUnit: String, CaseIterable, Identifiable {

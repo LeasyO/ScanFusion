@@ -13,6 +13,7 @@ final class ObjectCaptureModel: ObservableObject {
     @Published var session: ObjectCaptureSession?
     @Published var captureState: ObjectCaptureSession.CaptureState = .initializing
     @Published var passCompleted = false
+    @Published var flipping = false
     @Published var name = ""
 
     private var folder: URL?
@@ -57,7 +58,25 @@ final class ObjectCaptureModel: ObservableObject {
     func resetDetection() { session?.resetDetection() }
     func startCapturing() { session?.startCapturing() }
     func newPass() { session?.beginNewScanPass() }
-    func newPassAfterFlip() { session?.beginNewScanPassAfterFlip() }
+
+    // A Apple só aceita a volta após virar com a sessão pausada; chamar em .capturing derruba o app.
+    func startFlip() {
+        session?.pause()
+        flipping = true
+    }
+
+    func finishFlip() {
+        flipping = false
+        guard let session else { return }
+        if session.isPaused { session.beginNewScanPassAfterFlip() }
+        if session.isPaused { session.resume() }
+    }
+
+    func cancelFlip() {
+        flipping = false
+        if session?.isPaused == true { session?.resume() }
+    }
+
     func finish() { session?.finish() }
 
     func cancel() {
@@ -185,7 +204,8 @@ struct ObjectCaptureFlow: View {
                     tips: [
                         "Objeto fosco e com textura, sobre superfície lisa que contraste com ele.",
                         "Luz difusa: sombra ou dia nublado. Evite reflexos fortes.",
-                        "Dê uma volta completa, depois outra mais alta e, se der, vire o objeto."
+                        "Dê uma volta completa, depois outra mais alta e, se der, vire o objeto.",
+                        "Com tripé, escolha Tripé antes de detectar: dá para circular por baixo sem virar a peça."
                     ],
                     name: $model.name,
                     namePlaceholder: "Nome da peça",
@@ -218,6 +238,7 @@ struct ObjectCaptureFlow: View {
 private struct ObjectCaptureScreen: View {
     @ObservedObject var model: ObjectCaptureModel
     let session: ObjectCaptureSession
+    @AppStorage(SettingsKey.objectTripod) private var onTripod = false
 
     var body: some View {
         ZStack {
@@ -243,8 +264,11 @@ private struct ObjectCaptureScreen: View {
         switch model.captureState {
         case .initializing: return "Iniciando sensores"
         case .ready: return "Mire no objeto"
-        case .detecting: return "Ajuste a caixa"
-        case .capturing: return model.passCompleted ? "Volta completa" : "Ande devagar em volta"
+        case .detecting: return onTripod ? "Caixa só na peça, sem o tripé" : "Ajuste a caixa"
+        case .capturing:
+            if model.flipping { return "Vire o objeto e toque em Continuar" }
+            if !model.passCompleted { return "Ande devagar em volta" }
+            return onTripod ? "Nova volta: mais alto ou por baixo" : "Volta completa"
         case .finishing: return "Salvando fotos"
         default: return nil
         }
@@ -254,8 +278,15 @@ private struct ObjectCaptureScreen: View {
     private var controls: some View {
         switch model.captureState {
         case .ready:
-            Button { model.detect() } label: { Label("Detectar objeto", systemImage: "scope") }
-                .buttonStyle(GoldButtonStyle())
+            VStack(spacing: 10) {
+                Picker("Apoio", selection: $onTripod) {
+                    Text("Mesa").tag(false)
+                    Text("Tripé").tag(true)
+                }
+                .pickerStyle(.segmented)
+                Button { model.detect() } label: { Label("Detectar objeto", systemImage: "scope") }
+                    .buttonStyle(GoldButtonStyle())
+            }
         case .detecting:
             HStack(spacing: 10) {
                 Button("Refazer") { model.resetDetection() }
@@ -264,13 +295,22 @@ private struct ObjectCaptureScreen: View {
                     .buttonStyle(GoldButtonStyle())
             }
         case .capturing:
-            if model.passCompleted {
+            if model.flipping {
+                HStack(spacing: 10) {
+                    Button("Voltar") { model.cancelFlip() }
+                        .buttonStyle(GoldButtonStyle(filled: false))
+                    Button { model.finishFlip() } label: { Label("Continuar", systemImage: "arrow.uturn.up") }
+                        .buttonStyle(GoldButtonStyle())
+                }
+            } else if model.passCompleted {
                 VStack(spacing: 10) {
                     HStack(spacing: 10) {
                         Button("Nova volta") { model.newPass() }
                             .buttonStyle(GoldButtonStyle(filled: false))
-                        Button("Virei o objeto") { model.newPassAfterFlip() }
-                            .buttonStyle(GoldButtonStyle(filled: false))
+                        if !onTripod {
+                            Button("Virar o objeto") { model.startFlip() }
+                                .buttonStyle(GoldButtonStyle(filled: false))
+                        }
                     }
                     Button { model.finish() } label: { Label("Finalizar e gerar", systemImage: "checkmark") }
                         .buttonStyle(GoldButtonStyle())
