@@ -68,7 +68,7 @@ struct SettingsView: View {
 
             Section {
                 if let syncName {
-                    Label(syncName, systemImage: "icloud.fill")
+                    Label(syncName, systemImage: "folder.fill")
                         .foregroundStyle(Theme.goldLight)
                     Button("Trocar pasta") { pickingFolder = true }
                     Button("Parar de copiar", role: .destructive) {
@@ -79,7 +79,7 @@ struct SettingsView: View {
                     Button {
                         pickingFolder = true
                     } label: {
-                        Label("Escolher pasta no iCloud Drive", systemImage: "icloud.and.arrow.up")
+                        Label("Escolher pasta (Google Drive ou iCloud)", systemImage: "folder.badge.plus")
                     }
                 }
                 if let syncError {
@@ -88,7 +88,7 @@ struct SettingsView: View {
             } header: {
                 Text("Envio automático para o PC").foregroundStyle(Theme.gold)
             } footer: {
-                Text("Crie uma pasta \"ScanFusion\" no iCloud Drive e escolha aqui. Cada scan é copiado para lá sozinho e aparece no Windows pelo app iCloud.")
+                Text("No Arquivos, escolha Google Drive › Meu Drive › ScanFusion. Cada scan vai para lá sozinho, com as fotos do modo Objeto, e aparece no Estúdio 3D › Scanner, sem cabo.")
             }
             .listRowBackground(Theme.surface)
 

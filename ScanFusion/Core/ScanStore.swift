@@ -74,7 +74,19 @@ enum ScanStore {
             record.syncedTo = target
         }
         save(record)
+        sendPhotos(of: record)
         return record
+    }
+
+    /// Fotos do modo Objeto vão junto para a pasta de envio (o Estúdio 3D reconstrói em alta no PC).
+    /// Em segundo plano: são centenas de MB e não podem travar a tela.
+    static func sendPhotos(of record: ScanRecord) {
+        let photos = record.folderURL.appendingPathComponent("Fotos", isDirectory: true)
+        guard FileManager.default.fileExists(atPath: photos.path) else { return }
+        let folder = record.folderName
+        Task.detached(priority: .utility) {
+            _ = SyncFolder.copy([photos], into: folder)
+        }
     }
 
     static func save(_ record: ScanRecord) {
@@ -107,12 +119,13 @@ enum ScanStore {
         var updated = record
         updated.syncedTo = SyncFolder.copy(record.fileURLs, into: record.folderName)
         save(updated)
+        sendPhotos(of: updated)
         return updated
     }
 }
 
-/// Pasta escolhida pelo usuário (ex.: iCloud Drive/ScanFusion) para onde cada scan é copiado sozinho.
-/// Com o iCloud para Windows, os arquivos aparecem no PC automaticamente.
+/// Pasta escolhida pelo usuário (ex.: Google Drive/ScanFusion) para onde cada scan é copiado sozinho.
+/// Com o Google Drive (ou o iCloud) para Windows, os arquivos aparecem no PC automaticamente.
 enum SyncFolder {
     private static let key = "sync.bookmark"
 
