@@ -15,8 +15,9 @@ O usuário só tem **Windows**. Não existe Xcode local, `swift` nem `xcodebuild
 2. `git add -A && git commit -m "..." && git push`
 3. Acompanhar: `gh run watch` (ou `gh run list --limit 3`)
 4. Se falhar: `gh run view --log-failed` e procurar linhas `error:`; corrigir e repetir.
-5. Quando passa, a Release `latest` recebe o `ScanFusion.ipa` e o `source.json`; o SideStore do iPhone
-   mostra a atualização.
+5. Quando passa, a Release `latest` recebe o `ScanFusion.ipa` (versão 2.0.<número do run>). A instalação
+   no iPhone é pelo iloader (Import IPA), com cabo; o SideStore não loga desde out/2026 (erro -80045).
+   Workflow só roda sozinho em push na `main`; numa branch: `gh workflow run build.yml --ref <branch>`.
 
 Como não há compilador local, revise com cuidado assinaturas de APIs da Apple (ARKit, RealityKit,
 RoomPlan, ModelIO, Object Capture) antes de enviar.
@@ -37,4 +38,7 @@ RoomPlan, ModelIO, Object Capture) antes de enviar.
 - Exportação padrão: milímetros, Z para cima (`ExportOptions.current`).
 - Coordenadas internas: metros, Y para cima (padrão ARKit); converter só na exportação (`Geometry.convert`).
 - Cada fluxo termina em `ScanStore.finalize(...)`, que salva o registro e copia para a pasta de sync.
-- Distribuição: SideStore (grátis, renovação automática) ou TestFlight (job opcional com segredos ASC_*).
+- Distribuição: iloader com conta Apple grátis (7 dias) ou TestFlight (job opcional com segredos ASC_*).
+- Alta precisão no PC: as fotos do modo Objeto (`Scans/<pasta>/Fotos`, HEIC com profundidade) são puxadas
+  pelo cabo e processadas pela aba Scanner do Estúdio 3D (`C:\Users\rafas\Documents\Claude\Tripo3D\scanner`):
+  COLMAP na GPU, escala pela folha de marcadores ArUco ou pelo LiDAR. Por isso o over-capture fica ligado.
